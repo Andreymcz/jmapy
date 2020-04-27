@@ -14,6 +14,7 @@ def remove_duplicated_entries(compounds_table):
     # sort by name and Area in descending order
     sort_columns = [NAME_COL, AREA_COL , RT_COL]
     #print("########### Sorting data by #############")
+    compounds_table.Name = compounds_table.Name.apply(lambda x: x.lower())
     compounds_table.sort_values(by=sort_columns, inplace=True, ascending=False)
 
     # Get first result for each compound
