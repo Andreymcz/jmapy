@@ -9,9 +9,17 @@ class ChemspiWebDB:
          # Chemspider search functions
             
     # search compounds that matches name, mass criteria. Return list of matching csid's and a list of warnings
-    def find_compounds_by_name_mass(self, target_compound_name, target_compound_mass = 0, equal_mass_tolerance_percent = 0.001):
+    def find_compound_ids_by_name_mass(self, target_compound_name, target_compound_mass = 0, equal_mass_tolerance_percent = 0.001):
+        
+        if not target_compound_name.isnumeric():
+            print("non-numeric")
+            http_ids = http_find_compound_ids_by_name_mass(target_compound_name, target_compound_mass, equal_mass_tolerance_percent)
+            if len(http_ids) > 0:
+                return http_ids
+        
+        print("Searching compound by name using web API")
         TOLERATED_ERROR = target_compound_mass * equal_mass_tolerance_percent
-        print("find_compounds_by_name_mass")
+
         warnings = []
         compound_csids = []
         
@@ -29,13 +37,13 @@ class ChemspiWebDB:
         if found_compounds.count == 0:
             warnings.append("Compound Not found in chemspider web search")
 
-        print("sucess")
+        #print("sucess")
         for result in found_compounds :
             try:
-                print("Result: ")
-                print("ID: ", result.record_id)
-                print("Molecular Formula: ", result.molecular_formula)
-                print("Monoisotopic Mass: ", result.monoisotopic_mass)
+                #print("Result: ")
+                #print("ID: ", result.record_id)
+                #print("Molecular Formula: ", result.molecular_formula)
+                #print("Monoisotopic Mass: ", result.monoisotopic_mass)
                 if target_compound_mass > 0 and abs(result.monoisotopic_mass - target_compound_mass) > TOLERATED_ERROR :
                     #print("Mass too diferent, skipping")                    
                     continue # mass too diferent from target, continue search
@@ -45,7 +53,7 @@ class ChemspiWebDB:
                 warnings.append("Compound csID(" + str(result.record_id) + ") missing needed info")
 
 
-        return compound_csids, warnings
+        return compound_csids
     
     def find_external_references(self, compound_csid, search_databases):
         # search for external references from known databases
@@ -67,6 +75,8 @@ class ChemspiWebDB:
             results[db_name].append(db_comp_id)
         
         return results, warnings
+    def find_compound_by_id(self, csid):
+        return http_find_compound_by_id(csid)
 
 from dataclasses import dataclass    
 @dataclass
@@ -157,9 +167,15 @@ def http_find_compounds_by_name_mass(compound_name, target_compound_mass, equal_
     else:
         print("no results")
         return []
+    
+def http_find_compound_ids_by_name_mass(compound_name, target_compound_mass, equal_mass_tolerance_percent = 0.001):
+    ids = []
+    for c in http_find_compounds_by_name_mass(compound_name, target_compound_mass, equal_mass_tolerance_percent):
+        ids.append(c.csid)
+    return ids
 
 def http_find_compound_by_id(compound_id):
-    return __extract_single_compound(__search_compound_by_id(id), compound_mass)
+    return __extract_single_compound(__search_compound_by_id(compound_id))
 
 
 def http_find_compound_external_sources_ids(compound_id, external_sources_list):
