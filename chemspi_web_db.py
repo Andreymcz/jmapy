@@ -89,10 +89,14 @@ class ChemspiCompoundInfo:
             
 
 def __http_req(address):
-    print("Waiting for http request: ", address, "...", end='')     
-    r = requests.get(address)
-    print("Done");
-    return BeautifulSoup(r.text, 'html.parser')
+    print("Waiting for http request: ", address, "...", end='')
+    for i in range(100):
+        try:
+            r = requests.get(address, timeout=10)
+            print("Done");
+            return BeautifulSoup(r.text, 'html.parser')
+        except requests.exceptions.Timeout:
+            print("Timeout, Trying again ...")
             
 def __search_compound_by_name(name):
     addr = 'http://www.chemspider.com/Search.aspx?q=' + name
@@ -120,7 +124,10 @@ def __extract_single_compound(single_request_result):
             if ptitle == "Molecular Formula":
                 compound_info.molecular_formula = li.contents[1].get_text()
             elif ptitle == "Monoisotopic mass":
-                compound_info.monoisotopic_mass = float(str(li.contents[1]).split(" ")[0])
+                try:
+                    compound_info.monoisotopic_mass = float(str(li.contents[1]).split(" ")[0])
+                except:
+                    compound_info.monoisotopic_mass = 999999999999.0
             elif ptitle == "ChemSpider ID":
                 compound_info.csid = int(li.contents[1])
 
