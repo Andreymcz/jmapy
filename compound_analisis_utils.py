@@ -1,3 +1,57 @@
+from bs4 import BeautifulSoup
+import requests
+import time
+
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+from diskcache import Cache
+
+cache = Cache("cached_data")
+
+def requests_retry_session(
+    retries=5,
+    backoff_factor=0.3,
+    status_forcelist=(429, 500, 502, 503, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+@cache.memoize(name = "httpreq")
+def __cached_http_req(address, sleep_before = 0.5):    
+    session = requests_retry_session()    
+    while True:
+        try:
+            time.sleep(sleep_before)            
+            response = session.get(
+                address, timeout=10
+            )
+        except Exception as x:
+            print( x.__class__.__name__, ', trying again')
+            sleep_before += 5
+        else:
+            print('status=', response.status_code, end = '')                  
+            return response.text
+
+def __http_req(address, sleep_before = 0.5):
+    t0 = time.time()
+    print("Waiting for http request: ", address, "...", end='')
+    html = __cached_http_req(address, sleep_before);    
+    t1 = time.time()
+    print('Done. Took', t1 - t0, 'seconds')
+    return BeautifulSoup(html, 'html.parser')
+    
+    
 def remove_duplicated_entries(compounds_table):
     
     NAME_COL = 'Name'
@@ -28,7 +82,7 @@ def remove_duplicated_entries(compounds_table):
     
     return compounds_table
     
-def parse_generated_CSID(csid):
+def parse_generated_CSID(csid):    
     if type(csid) is str:
         csids = []
         try:
@@ -47,9 +101,7 @@ def CSID_list_to_string(ids):
         for csid in ids:
             csids += str(csid) + ";"       
     elif len(ids) == 1 :
-        csids = ids[0]        
-    else:        
-        csids = "ND"
+        csids = ids[0]
     return csids
 
 def equal_compound_mass(mass1, mass2, equal_mass_tolerance_percent = 0.001):

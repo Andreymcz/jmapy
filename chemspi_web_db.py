@@ -1,6 +1,6 @@
 from chemspipy import ChemSpider
-from bs4 import BeautifulSoup
-import requests
+import compound_analisis_utils as utils
+from IPython.core.display import display, HTML
 
 # Chemspi web api utilities
 class ChemspiWebDB:
@@ -87,24 +87,14 @@ class ChemspiCompoundInfo:
         monoisotopic_mass: float = 0.0
         iupac_name: str = "NOT FOUND"
             
-
-def __http_req(address):
-    print("Waiting for http request: ", address, "...", end='')
-    for i in range(100):
-        try:
-            r = requests.get(address, timeout=10)
-            print("Done");
-            return BeautifulSoup(r.text, 'html.parser')
-        except requests.exceptions.Timeout:
-            print("Timeout, Trying again ...")
             
 def __search_compound_by_name(name):
     addr = 'http://www.chemspider.com/Search.aspx?q=' + name
-    return __http_req(addr)
+    return utils.__http_req(addr)
     
 def __search_compound_by_id(id):
     addr = 'http://www.chemspider.com/Chemical-Structure.' + str(id) + ".html";
-    return __http_req(addr)
+    return utils.__http_req(addr)
             
 def __extract_single_compound(single_request_result):
     compound_info = ChemspiCompoundInfo()
@@ -112,6 +102,8 @@ def __extract_single_compound(single_request_result):
     structure_header = single_request_result.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewDetails_rptDetailsView_ctl00_structureHead")    
     details = single_request_result.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewTabDetailsControl_identifiers_ctl_synonymsControl_SynonymsPanel")
     
+    if structure_header == None:
+        return compound_info
     #print(details)
     #print(structure_header.prettify())
     # db name
@@ -131,18 +123,37 @@ def __extract_single_compound(single_request_result):
             elif ptitle == "ChemSpider ID":
                 compound_info.csid = int(li.contents[1])
 
-    for syn in details.find_all('div', class_="syn", recursive=False):        
-        SYN_REF_TARGET = "[ACD/IUPAC Name]"
+    if details == None:
+        return compound_info
+    #display(details.prettify())
+    for syn in details.find_all('div', class_="syn"):
+        #print("-----")
+        #print(syn)
+        SYN_REF_IUPAC = "[ACD/IUPAC Name]"
+        SYN_REF_INDEX = "[ACD/Index Name]"
 
         language = syn.find('span', class_='synonym_language')        
-        syn_ref = syn.find('span', class_='synonym_ref')
-        if syn_ref != None and syn_ref.string.strip() == SYN_REF_TARGET and language == None:
-            if syn.strong:
-                compound_info.iupac_name = syn.strong.get_text()
-            elif syn.find('span', class_='synonym_cn'):
-                compound_info.iupac_name = syn.find('span', class_='synonym_cn').get_text()
-            else:
-                compound_info.iupac_name = "NOT FOUND"
+        syn_ref = syn.find('span', class_='synonym_ref')        
+        
+        if syn_ref != None and language == None:
+            syn_ref_name = syn_ref.string.strip()
+            #print(syn_ref_name)
+            if syn_ref_name == SYN_REF_IUPAC or syn_ref_name == SYN_REF_INDEX:                
+                compound_info.iupac_name = ""
+                for string in syn.stripped_strings:
+                    if string == SYN_REF_IUPAC or string == SYN_REF_INDEX:
+                        break
+                    compound_info.iupac_name += string
+                    
+                #compound_info.iupac_name = compound_info.iupac_name.replace(SYN_REF_IUPAC, '')
+                #compound_info.iupac_name = compound_info.iupac_name.replace(SYN_REF_INDEX, '')
+                    
+            #if syn.strong:
+            #    compound_info.iupac_name = syn.strong.get_text()
+            #elif syn.find('span', class_='synonym_cn'):
+            #    compound_info.iupac_name = syn.find('span', class_='synonym_cn').get_text()
+            #else:
+            #    compound_info.iupac_name = "NOT FOUND"
             
     
     return compound_info
@@ -191,7 +202,7 @@ def http_find_compound_external_sources_ids(compound_id, external_sources_list):
     for es in external_sources_list:
         external_sources_ids[es] = []
         
-    request_response = __http_req('http://www.chemspider.com/ibcontent.ashx?csid=' + str(compound_id) + '&type=ds')
+    request_response = utils.__http_req('http://www.chemspider.com/ibcontent.ashx?csid=' + str(compound_id) + '&type=ds')
     if not request_response.find('table'):
         return external_sources_ids
     
