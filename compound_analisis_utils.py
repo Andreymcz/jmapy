@@ -6,7 +6,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from diskcache import Cache
 
-cache = Cache("cached_data")
+cache = Cache("D:\\NAS\\tmp\\cached_data")
 
 def requests_retry_session(
     retries=5,
