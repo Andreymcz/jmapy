@@ -86,6 +86,7 @@ class ChemspiCompoundInfo:
         molecular_formula: str = ""
         monoisotopic_mass: float = 0.0
         iupac_name: str = "NOT FOUND"
+        details = dict()
             
             
 def __search_compound_by_name(name):
@@ -100,7 +101,7 @@ def __extract_single_compound(single_request_result):
     compound_info = ChemspiCompoundInfo()
     
     structure_header = single_request_result.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewDetails_rptDetailsView_ctl00_structureHead")    
-    details = single_request_result.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewTabDetailsControl_identifiers_ctl_synonymsControl_SynonymsPanel")
+    synonyms = single_request_result.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewTabDetailsControl_identifiers_ctl_synonymsControl_SynonymsPanel")
     
     if structure_header == None:
         return compound_info
@@ -109,7 +110,7 @@ def __extract_single_compound(single_request_result):
     # db name
     db_name = structure_header.find(id = "ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewDetails_rptDetailsView_ctl00_WrapTitle")
     compound_info.name = db_name.get_text()
-    
+    # basic info
     for li in structure_header.find_all('li'):
         if li.span and li.span.has_attr('class') and li.span['class'][0] == "prop_title":
             ptitle = li.span.string
@@ -123,10 +124,27 @@ def __extract_single_compound(single_request_result):
             elif ptitle == "ChemSpider ID":
                 compound_info.csid = int(li.contents[1])
 
-    if details == None:
+    # details
+    props = structure_header.find('div', class_="struct-extra-props")
+    if props != None:
+        for prop in props.find_all('li'):
+            #print(prop.prettify())
+            prop_name = prop.span.string.strip()
+            #print("Name: ", prop_name)
+            prop_value = ""
+            for string in prop.p.stripped_strings:
+                #print("Value: ", string)
+                if string == "Copy" or string == "Copied":
+                    continue;                
+                prop_value += string
+            #print("Value: ", prop_value)
+            compound_info.details[prop_name] = prop_value
+            
+    # IUPAC name
+    if synonyms == None:
         return compound_info
     #display(details.prettify())
-    for syn in details.find_all('div', class_="syn"):
+    for syn in synonyms.find_all('div', class_="syn"):
         #print("-----")
         #print(syn)
         SYN_REF_IUPAC = "[ACD/IUPAC Name]"

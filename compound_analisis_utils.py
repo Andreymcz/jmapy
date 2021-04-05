@@ -45,10 +45,10 @@ def __cached_http_req(address, sleep_before = 0.5):
 
 def __http_req(address, sleep_before = 0.5):
     t0 = time.time()
-    print("Waiting for http request: ", address, "...", end='')
+    print("Waiting for http request: ", address, "... ", end='')
     html = __cached_http_req(address, sleep_before);    
     t1 = time.time()
-    print('Done. Took', t1 - t0, 'seconds')
+    print(' Done. Took', t1 - t0, 'seconds')
     return BeautifulSoup(html, 'html.parser')
     
     
