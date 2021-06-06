@@ -1,4 +1,4 @@
-import compound_analisis_utils as utils
+import cutils as utils
 import re
 from bs4 import BeautifulSoup, NavigableString
 

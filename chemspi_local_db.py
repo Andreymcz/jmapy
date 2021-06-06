@@ -17,12 +17,12 @@ class ChemspiLocalDB:
         while search_name_idx < self.db_names.shape[0]:
             db_row = self.db_names.index[search_name_idx]
             db_entry = self.database.iloc[db_row]
-            #print("Candidate: ",db_entry.Name.lower(), " ", db_entry['Molecular Weight'])
+            #print("Candidate: ",db_entry.Name.lower(), " ", db_entry[config.CA_MOL_WEIGHT_COL])
             if db_entry.Name.lower() != compound_name:
                 break
             else:
                 # check mass                
-                if compound_mass > 0 and abs(db_entry['Molecular Weight'] - compound_mass) < TOLERATED_ERROR:
+                if compound_mass > 0 and abs(db_entry[config.CA_MOL_WEIGHT_COL] - compound_mass) < TOLERATED_ERROR:
                     ids.append(db_entry.CSID)
             
             search_name_idx += 1

@@ -1,5 +1,5 @@
 from chemspipy import ChemSpider
-import compound_analisis_utils as utils
+import cutils as utils
 from IPython.core.display import display, HTML
 
 # Chemspi web api utilities

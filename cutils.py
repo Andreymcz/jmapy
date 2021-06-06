@@ -1,12 +1,12 @@
 from bs4 import BeautifulSoup
 import requests
 import time
-
+import config
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from diskcache import Cache
 
-cache = Cache("D:\\NAS\\tmp\\cached_data")
+cache = Cache(config.CA_CACHE_PATH)
 
 def requests_retry_session(
     retries=5,
@@ -53,30 +53,20 @@ def __http_req(address, sleep_before = 0.5):
     
     
 def remove_duplicated_entries(compounds_table):
-    
-    NAME_COL = 'Name'
-    AREA_COL = 'Area (Max.)'
-    RT_COL = 'RT [min]'
-        
+
     # sort by name and Area in descending order
-    sort_columns = [NAME_COL, AREA_COL , RT_COL]
-    #print("########### Sorting data by #############")
+    sort_columns = [config.CA_NAME_COL, config.CA_AREA_COL, config.CA_RT_COL]
     compounds_table.Name = compounds_table.Name.apply(lambda x: x.lower())
     
-    compounds_table.sort_values(by=sort_columns, inplace=True, ascending=False)
-    #print(compounds_table.columns)
+    compounds_table.sort_values(by=sort_columns, inplace=True, ascending=False)    
     # Get first result for each compound
     last_compound_name = None
     for row_index, row_data in compounds_table.iterrows() :
-        if last_compound_name == None or last_compound_name != row_data[NAME_COL]:
-            last_compound_name = row_data[NAME_COL]
-            #print(last_compound_name)
-            #print("Selected unique compound: ", row_data[NAME_COL], "(", row_data[column_index[AREA_COL]], ")")
+        if last_compound_name == None or last_compound_name != row_data[config.CA_NAME_COL]:
+            last_compound_name = row_data[config.CA_NAME_COL]            
             continue
-        #print("Discarded compound: ", row_data[NAME_COL], "(", row_data[column_index[AREA_COL]], ")")
         compounds_table.drop(index=row_index, inplace = True)
 
-    #print("########## Done filtering Duplicate compounds.... ###########")
     # sort by Name, ascending
     compounds_table.sort_index(inplace=True)
     

@@ -1,4 +1,4 @@
-import compound_analisis_utils as utils
+import cutils as utils
 
 def search_metabolite_info_by_id(hmdb_id, info_titles):
     request_result = utils.__http_req('https://hmdb.ca/metabolites/' + hmdb_id)
