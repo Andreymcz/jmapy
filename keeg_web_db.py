@@ -1,3 +1,4 @@
+import config
 import cutils as utils
 import re
 from bs4 import BeautifulSoup, NavigableString

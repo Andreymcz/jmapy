@@ -1,4 +1,7 @@
 # chemspi Local DB Class
+import config
+import cutils as utils
+
 import pandas as pd
 from chemspipy import ChemSpider
 class ChemspiLocalDB:

@@ -1,6 +1,10 @@
-from chemspipy import ChemSpider
+import config
 import cutils as utils
+
+
+from chemspipy import ChemSpider
 from IPython.core.display import display, HTML
+
 
 # Chemspi web api utilities
 class ChemspiWebDB:

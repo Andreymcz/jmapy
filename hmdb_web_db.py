@@ -1,3 +1,4 @@
+import config
 import cutils as utils
 
 def search_metabolite_info_by_id(hmdb_id, info_titles):
